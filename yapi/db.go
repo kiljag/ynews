@@ -3,18 +3,62 @@ package main
 import (
 	"database/sql"
 	"fmt"
+	"strings"
 
 	_ "github.com/lib/pq"
 )
 
-func InsertAskItem(rootId int64, items []*YItem) {
-
+func GetConnection() *sql.DB {
 	conn, err := sql.Open("postgres", "user=yuser password=H@ck3rNews host=localhost dbname=ynews")
 	if err != nil {
 		panic(err)
 	}
 
-	fmt.Println("connected to database")
+	return conn
+}
+
+func GetMissing(ids []int64) []int64 {
+
+	conn := GetConnection()
+	defer conn.Close()
+
+	idlist := make([]string, 0)
+	idmap := make(map[int64]bool)
+	for _, id := range ids {
+		idlist = append(idlist, fmt.Sprintf("%d", id))
+		idmap[id] = true
+	}
+	stmt := fmt.Sprintf("select distinct rootid from yitem where rootid in (%s)", strings.Join(idlist, ","))
+	rows, err := conn.Query(stmt)
+	if err != nil {
+		panic(err)
+	}
+	defer rows.Close()
+
+	//iterate over rows
+	for rows.Next() {
+		var id int64
+		err := rows.Scan(&id)
+		if err != nil {
+			panic(err)
+		}
+		delete(idmap, id)
+	}
+
+	if err = rows.Err(); err != nil {
+		panic(err)
+	}
+
+	result := []int64{}
+	for id := range idmap {
+		result = append(result, id)
+	}
+	return result
+}
+
+func InsertAskItem(rootId int64, items []*YItem) {
+
+	conn := GetConnection()
 	defer conn.Close()
 
 	itmap := make(map[int64]string, 0)
