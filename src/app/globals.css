@@ -16,12 +16,43 @@
   }
 }
 
-body {
-  color: rgb(var(--foreground-rgb));
-  background: linear-gradient(
-      to bottom,
-      transparent,
-      rgb(var(--background-end-rgb))
-    )
-    rgb(var(--background-start-rgb));
+/* .parent {
+  display: grid;
+  grid-template-columns: 100px 320px;
+  grid-template-rows: 80px 50px 120px;
+  text-align: center;
+} */
+
+.parent {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  overflow: scroll;
+  width: 100%;
 }
+
+.child {
+  background-color: green;
+  border: solid black;
+  padding: 1px;
+  height: 100px;
+  width: 100px;
+}
+
+.parent div:last-child {
+  margin-left: auto;
+}
+
+/*
+flex, clear, vertical-align do have affect on flex box
+
+1. block layout
+2. inline layout
+3. table layout
+4. poistioned layout
+
+flex axes , main axis (horizontal), cross axis (vertical)
+flex lines
+
+
+*/
