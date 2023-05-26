@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@types/he": "^1.2.0",
     "@types/node": "20.2.3",
     "@types/pg": "^8.10.1",
     "@types/react": "18.2.6",
@@ -16,6 +17,7 @@
     "autoprefixer": "10.4.14",
     "eslint": "8.41.0",
     "eslint-config-next": "13.4.3",
+    "he": "^1.2.0",
     "next": "13.4.3",
     "pg": "^8.11.0",
     "postcss": "8.4.23",

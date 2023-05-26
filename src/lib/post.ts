@@ -1,6 +1,7 @@
 import { Client, Pool } from 'pg';
+import he from 'he';
 
-interface AskItem {
+export interface AskItem {
     ItemId: number,
     UserId: string,
     Content: string,
@@ -40,23 +41,76 @@ async function getConnection(): Promise<Client | Error> {
     });
 }
 
-export async function fetchPosts() {
+export async function fetchPosts(): Promise<AskItem[]> {
     let client = await getConnection();
-    if (client instanceof Client) {
+    let posts: AskItem[] = samplePosts;
 
+    if (client instanceof Client) {
         console.error("client connected");
-        let res = await client.query('select id, userid, content from yitem');
-        let posts: AskItem[] = res.rows.map(row => ({
+        let res = await client.query('select distinct rootid from yitem');
+        let rootIds: number[] = res.rows.map(row => row['rootid']);
+
+        if (rootIds.length > 0) {
+            let ids = rootIds.map(id => id.toString()).join(",");
+            let stmt = `select id, userid, content from yitem where id in (${ids})`;
+            console.log(`executing ${stmt}`);
+            let res = await client.query(stmt);
+            posts = res.rows.map(row => ({
+                ItemId: row['id'],
+                UserId: row['userid'],
+                Content: he.decode(row['content']),
+                Kids: [],
+            }));
+        }
+        client.end();
+    }
+
+    return Promise.resolve(posts);
+}
+
+export async function fetchPost(rootId: number): Promise<AskItem | null> {
+    let client = await getConnection();
+
+    if (client instanceof Client) {
+        console.error("client connected");
+        let itemMap: Record<number, AskItem> = {}
+        let kidmap: Record<number, number[]> = {}
+
+        // fetch items
+        let res = await client.query(`select id, userid, content from yitem where rootid=${rootId}`);
+        let items: AskItem[] = res.rows.map(row => ({
             ItemId: row['id'],
             UserId: row['userid'],
-            Content: row['content'],
+            Content: he.decode((row['content'])),
             Kids: [],
-        }))
+        }));
+        for (let item of items) {
+            itemMap[item.ItemId] = item;
+        }
 
-        return Promise.resolve(posts);
+        // fetch kids
+        res = await client.query(`select id, kid from ykid where rootid=${rootId}`);
+        for (let row of res.rows) {
+            let id = row['id'] as number;
+            let kid = row['kid'] as number;
+            if (!kidmap[id]) {
+                kidmap[id] = [];
+            }
+            kidmap[id].push(kid);
+        }
 
-    } else {
-        return Promise.resolve(samplePosts);
+        for (const id in kidmap) {
+            let kids = kidmap[id];
+            for (const kid of kids) {
+                if (itemMap[id] && itemMap[kid]) {
+                    itemMap[id].Kids.push(itemMap[kid]);
+                }
+            }
+        }
+
+        return itemMap[rootId] || null;
     }
+
+    return Promise.resolve(null);
 }
 
