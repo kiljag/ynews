@@ -1,6 +1,30 @@
+
+import Image from 'next/image';
 import NavBar from "@/components/NavBar";
 import { AskItem, fetchPost } from "@/lib/post";
-import { useRouter } from "next/navigation";
+import usericon from '@/assets/user-icon.webp';
+
+interface ItemDiv {
+    item: AskItem,
+    depth: number,
+}
+
+function dfs(itemDivs: ItemDiv[], item: AskItem, depth: number) {
+    itemDivs.push({
+        item: item,
+        depth: depth,
+    });
+
+    for (let kid of item.Kids) {
+        dfs(itemDivs, kid, depth + 1);
+    }
+}
+
+function orderItems(item: AskItem): ItemDiv[] {
+    let itemDivs: ItemDiv[] = [];
+    dfs(itemDivs, item, 0);
+    return itemDivs;
+}
 
 interface PostProps {
     params: {
@@ -20,57 +44,27 @@ export default async function Post(props: PostProps) {
         );
     }
 
-    interface Item {
-        id: number,
-        depth: number,
-    }
-
-    let children: any[] = []
-
-    let items: Item[] = [];
-    items.push({
-        id: askItem.ItemId,
-        depth: 0,
-    });
-
-    let postmap: Record<number, AskItem> = {
-        [askItem.ItemId]: askItem,
-    }
-
-    while (items.length > 0) {
-
-        let item = items[0];
-        let post = postmap[item.id];
-
-        children.push(
-            <div key={item.id} className="px-2 py-2">
-                <div className="font-bold text-sm text-black">
-                    {post.UserId}
+    let divItems = orderItems(askItem);
+    let children = divItems.filter(divitem => divitem.item.UserId && divitem.item.Content).map((divitem) => {
+        return (
+            <div key={divitem.item.ItemId} className='text-left p-2' style={{
+                paddingLeft: (1.5 * divitem.depth) + 'rem',
+            }}>
+                <div>
+                    <Image src={usericon} alt={'user icon'} className='h-6 w-6 rounded-full inline' />
+                    <span className='pl-2 text-sm font-medium text-gray-800'>{divitem.item.UserId}</span>
                 </div>
-                <div className="flex flex-wrap">
-                    <p className="text-gray-700 text-base">
-                        {post.Content}
-                    </p>
+                {divitem.item.Title !== "" ?
+                    <div className='pl-8 text-left text-sm font-bold'>{divitem.item.Title}</div> : null
+                }
+                <div className='text-sm pl-8' dangerouslySetInnerHTML={{ __html: divitem.item.Content }}>
                 </div>
             </div>
         );
-
-        for (let k of post.Kids) {
-            items.push({
-                id: k.ItemId,
-                depth: item.depth + 1,
-            })
-            postmap[k.ItemId] = k
-        }
-        items = items.slice(1);
-    }
+    })
 
     return (
-        <div>
-            <NavBar />
-            <div className="max-w rounded overflow-hidden shadow-lg">
-
-            </div>
+        <div className='border border-solid p-2'>
             {children}
         </div>
     );

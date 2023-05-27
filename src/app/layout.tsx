@@ -1,6 +1,8 @@
 
 import './globals.css'
 import { Metadata } from "next";
+import NavBar from "@/components/NavBar";
+import Footer from '@/components/Footer';
 
 export const metadata: Metadata = {
   title: 'Hello World',
@@ -14,8 +16,12 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className='bg-orange-200'>
-        {children}
+      <body className='flex justify-center text-center mt-2'>
+        <div className='w-11/12 bg-orange-50' >
+          <NavBar />
+          {children}
+          <Footer />
+        </div>
       </body>
     </html>
   )

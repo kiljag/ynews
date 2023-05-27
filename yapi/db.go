@@ -63,8 +63,8 @@ func InsertAskItem(rootId int64, items []*YItem) {
 
 	itmap := make(map[int64]string, 0)
 	for _, item := range items {
-		stmt := fmt.Sprintf("insert into yitem (id, userid, content, unixstamp, parent, rootid) values (%d, '%s', '%s', %d, %d, %d)",
-			item.Id, item.UserId, item.Content, item.Unix, item.Parent, rootId)
+		stmt := fmt.Sprintf("insert into yitem (id, userid, title, content, unixstamp, parent, rootid) values (%d, '%s', '%s', '%s', %d, %d, %d)",
+			item.Id, item.UserId, item.Title, item.Content, item.Unix, item.Parent, rootId)
 		itmap[item.Id] = stmt
 	}
 

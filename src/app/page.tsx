@@ -1,31 +1,32 @@
-import Link from 'next/link';
 
-import NavBar from "@/components/NavBar";
+import Link from 'next/link';
+import Image from 'next/image';
+
 import { fetchPosts } from '@/lib/post';
+import usericon from '@/assets/user-icon.webp';
 
 export default async function Home() {
 
     let posts = await fetchPosts();
     let postComponents = posts.map(post => {
         return (
-            <div key={post.ItemId} className="px-6 py-4 border-solid border-2">
-                <div className="font-bold text-sm">
-                    <span className="text-black pr-4">
-                        <Link href={`/post/${post.ItemId}`}>{post.ItemId}</Link>
-                    </span>
-                    <span>{`u/${post.UserId}`}</span>
+            <div key={post.ItemId} className='border border-solid p-2 text-left border-orange-200 hover:border-orange-500'>
+                <div>
+                    <Image src={usericon} alt={'user icon'} className='h-6 w-6 rounded-full inline' />
+                    <span className='pl-4 text-sm font-medium text-gray-800'>{post.UserId}</span>
                 </div>
-                <p className="text-gray-700 text-base">
-                    {post.Content}
-                </p>
+                <Link href={`/post/${post.ItemId}`}>
+                    <div className='pt-2 text-left text-sm font-bold'>{post.Title}</div>
+                    <div className='pt-2 text-left text-sm' dangerouslySetInnerHTML={{ __html: post.Content }}>
+                    </div>
+                </Link>
             </div>
-        )
+        );
     });
 
     return (
         <div>
-            <NavBar />
-            <div className="max-w rounded overflow-hidden shadow-lg">
+            <div className="flex flex-col">
                 {postComponents}
             </div>
         </div >

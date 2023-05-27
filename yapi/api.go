@@ -13,6 +13,7 @@ type YItem struct {
 	Id      int64   `json:"id"`
 	Kids    []int64 `json:"kids"`
 	Parent  int64   `json:"parent"`
+	Title   string  `json:"title"`
 	Content string  `json:"text"`
 	Unix    int64   `json:"time"`
 	Type    string  `json:"string"`

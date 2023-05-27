@@ -1,12 +1,8 @@
-DROP INDEX IF EXISTS ykid_root;
-DROP TABLE IF EXISTS ykid;
-
-DROP INDEX IF EXISTS yitem_root;
-DROP TABLE IF EXISTS yitem;
 
 CREATE TABLE IF NOT EXISTS yitem (
     id bigint NOT NULL, 
     userid varchar(20) NOT NULL,
+    title text,
     content text NOT NULL,
     unixstamp bigint NOT NULL,
     parent bigint NOT NULL,
