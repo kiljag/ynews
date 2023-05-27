@@ -1,4 +1,4 @@
-import { Client, Pool } from 'pg';
+import { Pool } from 'pg';
 import he from 'he';
 
 export interface AskItem {
@@ -25,7 +25,7 @@ const samplePosts: AskItem[] = [{
 
 let pool: Pool
 
-async function getConnection(): Promise<Pool | Error> {
+async function getConnection(): Promise<Pool> {
     if (pool != null) {
         return pool
     }
@@ -43,6 +43,7 @@ async function getConnection(): Promise<Pool | Error> {
                 console.log("failed to connect to database");
                 reject(err);
             } else {
+                console.log("connected to database");
                 pool = client;
                 resolve(client);
             }
@@ -54,18 +55,14 @@ let postList: AskItem[] = []
 let postCache: Record<number, AskItem> = {}
 
 export async function fetchPosts(): Promise<AskItem[]> {
-    if (postList.length > 0) {
-        console.log('using cache');
-        return postList;
-    }
-    let client = await getConnection();
-    let posts: AskItem[] = samplePosts;
 
-    if (client instanceof Pool) {
-        console.error("client connected");
+    let client: Pool;
+    try {
+        client = await getConnection();
         let res = await client.query('select distinct rootid from yitem order by rootid desc limit 50');
         let rootIds: number[] = res.rows.map(row => row['rootid']);
 
+        let posts = samplePosts;
         if (rootIds.length > 0) {
             let ids = rootIds.map(id => id.toString()).join(",");
             let stmt = `select id, userid, title, content from yitem where id in (${ids})`;
@@ -80,20 +77,20 @@ export async function fetchPosts(): Promise<AskItem[]> {
             }));
             postList = posts;
         }
-    }
+        return Promise.resolve(posts);
 
-    return Promise.resolve(posts);
+    } catch (err) {
+        return Promise.resolve(samplePosts);
+    }
 }
 
-
-export async function fetchPost(rootId: number): Promise<AskItem | null> {
+export async function fetchPost(rootId: number): Promise<AskItem> {
     if (postCache[rootId]) {
         return postCache[rootId];
     }
-    let client = await getConnection();
 
-    if (client instanceof Pool) {
-        console.error("client connected");
+    try {
+        let client = await getConnection();
         let itemMap: Record<number, AskItem> = {}
         let kidmap: Record<number, number[]> = {}
 
@@ -131,10 +128,10 @@ export async function fetchPost(rootId: number): Promise<AskItem | null> {
         }
 
         postCache[rootId] = itemMap[rootId];
-
         return itemMap[rootId] || null;
-    }
 
-    return Promise.resolve(null);
+    } catch (err) {
+        return Promise.resolve(samplePosts[0]);
+    }
 }
 
