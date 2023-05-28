@@ -24,23 +24,34 @@ const samplePosts: AskItem[] = [{
 }]
 
 let pool: Pool
+const dbConfig = {
+    user: process.env.POSTGRES_USER,
+    password: process.env.POSTGRES_PASSWORD,
+    database: process.env.POSTGRES_DATABASE,
+    host: process.env.POSTGRES_HOST,
+}
 
 async function getConnection(): Promise<Pool> {
     if (pool != null) {
         return pool
     }
+
+    console.log('dbconfig : ', dbConfig);
+
     // connect to database
     let client = new Pool({
-        user: process.env.PGSQL_USER,
-        password: process.env.PGSQL_PASSWORD,
-        host: process.env.PGSQL_HOST,
-        database: process.env.PGSQL_DATABASE,
+        user: dbConfig.user,
+        password: dbConfig.password,
+        database: dbConfig.database,
+        host: dbConfig.host,
+        port: 6543,
+        ssl: false,
     });
 
     return new Promise((resolve, reject) => {
         client.connect(err => {
             if (err) {
-                console.log("failed to connect to database");
+                console.log("db error : ", err);
                 reject(err);
             } else {
                 console.log("connected to database");

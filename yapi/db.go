@@ -9,7 +9,7 @@ import (
 )
 
 func GetConnection() *sql.DB {
-	conn, err := sql.Open("postgres", "user=yuser password=H@ck3rNews host=localhost dbname=ynews")
+	conn, err := sql.Open("postgres", "user=yuser password=H@ck3rNews host=localhost port=6543 dbname=ynews sslmode=disable")
 	if err != nil {
 		panic(err)
 	}
