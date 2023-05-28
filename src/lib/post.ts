@@ -44,8 +44,6 @@ async function getConnection(): Promise<Pool> {
         password: dbConfig.password,
         database: dbConfig.database,
         host: dbConfig.host,
-        port: 6543,
-        ssl: false,
     });
 
     return new Promise((resolve, reject) => {
