@@ -9,12 +9,12 @@ import (
 )
 
 func GetConnection() *sql.DB {
-	conn, err := sql.Open("postgres", "user=yuser password=H@ck3rNews host=localhost port=6543 dbname=ynews sslmode=disable")
+	db, err := sql.Open("postgres", "user=yuser password=H@ck3rNews host=localhost dbname=ynews sslmode=disable")
 	if err != nil {
 		panic(err)
 	}
 
-	return conn
+	return db
 }
 
 func GetMissing(ids []int64) []int64 {
@@ -58,40 +58,36 @@ func GetMissing(ids []int64) []int64 {
 
 func InsertAskItem(rootId int64, items []*YItem) {
 
-	conn := GetConnection()
-	defer conn.Close()
+	db := GetConnection()
+	defer db.Close()
 
-	itmap := make(map[int64]string, 0)
-	for _, item := range items {
-		stmt := fmt.Sprintf("insert into yitem (id, userid, title, content, unixstamp, parent, rootid) values (%d, '%s', '%s', '%s', %d, %d, %d)",
-			item.Id, item.UserId, item.Title, item.Content, item.Unix, item.Parent, rootId)
-		itmap[item.Id] = stmt
+	// insert into yitem
+	stmt1, err := db.Prepare("INSERT INTO yitem (id, userid, title, content, unixstamp, parent, rootid) VALUES ($1, $2, $3, $4, $5, $6, $7)")
+	if err != nil {
+		panic(err)
+	}
+	defer stmt1.Close()
+
+	itmap := make(map[int64]bool, 0)
+	for _, it := range items {
+		stmt1.Exec(&it.Id, &it.UserId, &it.Title, &it.Content, &it.Unix, &it.Parent, rootId)
+		itmap[it.Id] = true
 	}
 
-	kidmap := make(map[int64][]string, 0)
-	for _, item := range items {
-		kids := make([]string, 0)
-		for _, kid := range item.Kids {
-			if _, ok := itmap[kid]; ok { // if kid item exists
-				stmt := fmt.Sprintf("insert into ykid (id, kid, rootid) values (%d, %d, %d)", item.Id, kid, rootId)
-				kids = append(kids, stmt)
+	// insert into ykid
+	stmt2, err := db.Prepare("INSERT INTO ykid (id, kid, rootid) VALUES ($1, $2, $3)")
+	if err != nil {
+		panic(err)
+	}
+	defer stmt2.Close()
+
+	for _, it := range items {
+		for _, k := range it.Kids {
+			if _, ok := itmap[k]; ok { // check if yitem exists
+				stmt2.Exec(it.Id, k, rootId)
 			}
 		}
-
-		if len(kids) > 0 {
-			kidmap[item.Id] = kids
-		}
 	}
 
-	//TODO: include in a transaction
-	for _, v := range itmap {
-		conn.Exec(v)
-	}
-	for _, vlist := range kidmap {
-		for _, v := range vlist {
-			conn.Exec(v)
-		}
-	}
-
-	fmt.Println("insert root yitem", rootId)
+	fmt.Println("inserted root yitem", rootId)
 }

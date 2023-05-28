@@ -10,3 +10,5 @@ services:
       POSTGRES_PASSWORD: H@ck3rNews
       POSTGRES_DATABASE: ynews
       POSTGRES_HOST: localhost
+    networks:
+      - host
